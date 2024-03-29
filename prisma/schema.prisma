@@ -9,14 +9,45 @@ datasource db {
   provider = "sqlite"
   url      = env("DATABASE_URL")
 }
-model product{
-  id String @id @default(uuid())
-  name String
-  priceInTaka Int
-  filePath String
-  imagePath String
-  description String
-  isAvailableForPurchase Boolean @default(true)
+
+model Product {
+  id                     String                 @id @default(uuid())
+  name                   String
+  priceInTaka            Int
+  filePath               String
+  imagePath              String
+  description            String
+  isAvailableForPurchase Boolean                @default(true)
+  createdAt              DateTime               @default(now())
+  updatedAt              DateTime               @updatedAt
+  orders                 Order[]
+  DownloadVarification   DownloadVarification[]
+}
+
+model User {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id              String   @id @default(uuid())
+  pricePaidInTaka Int
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  userId          String
+  productId       String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product         Product  @relation(fields: [productId], references: [id], onDelete: Restrict)
+}
+
+model DownloadVarification {
+  id        String   @id @default(uuid())
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 }
