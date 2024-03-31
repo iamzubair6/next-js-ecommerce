@@ -18,7 +18,7 @@ async function GetSalesData() {
     _count: true,
   });
 
-  let amount = 1000000;
+  let amount = salesData?._sum?.pricePaidInTaka || 0;
   let numberOfSales = salesData?._count || 0;
 
   return {
