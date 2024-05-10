@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 export const metadata: Metadata = {
   title: "VarietyVista",
   description: "A store for all your favorite products",
+  icons: {
+    // icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
