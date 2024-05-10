@@ -6,10 +6,10 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 export const metadata: Metadata = {
-  title: "VarietyVista",
+  title: "Swift Cart",
   description: "A store for all your favorite products",
   icons: {
-    // icon: "/favicon.ico",
+    icon: "/favicon.ico",
   },
 };
 
