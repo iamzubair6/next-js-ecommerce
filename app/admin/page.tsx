@@ -20,11 +20,14 @@ async function GetSalesData() {
 
   let amount = salesData?._sum?.pricePaidInTaka || 0;
   let numberOfSales = salesData?._count || 0;
-
+  await wait(2000);
   return {
     amount,
     numberOfSales,
   };
+}
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 async function GetUserData() {
   const [userCount, orderData] = await Promise.all([
