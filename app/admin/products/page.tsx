@@ -1,3 +1,3 @@
-export default function ProductsPage() {
+export default function AdminProductsPage() {
   return <h1>products</h1>;
 }
