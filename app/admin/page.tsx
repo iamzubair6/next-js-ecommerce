@@ -40,9 +40,22 @@ async function GetUserData() {
     averageValuePerUser,
   };
 }
-
+async function GetProductData() {
+  const [activeProducts, inactiveProducts] = await Promise.all([
+    db.product.count({ where: { isAvailableForPurchase: true } }),
+    db.product.count({ where: { isAvailableForPurchase: false } }),
+  ]);
+  return {
+    activeProducts,
+    inactiveProducts,
+  };
+}
 export default async function AdminDashboard() {
-  const [sales, users] = await Promise.all([GetSalesData(), GetUserData()]);
+  const [sales, users, product] = await Promise.all([
+    GetSalesData(),
+    GetUserData(),
+    GetProductData(),
+  ]);
 
   const cards: CardsType[] = [
     {
@@ -62,14 +75,13 @@ export default async function AdminDashboard() {
       //   currency: "BDT",
       //   minimumFractionDigits: 0,
       // }),
-      description: formatNumber(users?.userCount) + " " + "Users",
-      content: formatCurrency(users?.averageValuePerUser),
+      description: `${formatCurrency(users?.averageValuePerUser) + " " + "Average Value"}`,
+      content: `${formatNumber(users?.userCount)}`,
     },
     {
-      title: "Products",
-      description: "Lorem ipsum dolor sit amet.",
-      content:
-        "Lorem ipsum dolor sit amet, consectetur adipisicing elit. Quaer",
+      title: "Active Products",
+      description: `${formatNumber(product?.inactiveProducts) + " " + "Inactive"}`,
+      content: `${formatNumber(product?.activeProducts) + " " + "Active"}`,
     },
   ];
 
