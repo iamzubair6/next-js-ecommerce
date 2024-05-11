@@ -1,3 +1,9 @@
+import PageHeader from "../_components/PageHeader";
+
 export default function AdminProductsPage() {
-  return <h1>products</h1>;
+  return (
+    <>
+      <PageHeader>Products</PageHeader>
+    </>
+  );
 }
