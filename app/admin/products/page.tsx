@@ -17,7 +17,6 @@ export default function AdminProductsPage() {
   );
 }
 function ProductTable() {
-  //dasd
   return (
     <Table>
       <TableHeader>
