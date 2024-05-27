@@ -1,11 +1,11 @@
 import PageHeader from "../../_components/PageHeader";
+import ProductForm from "../_components/ProductForm";
 
-function NewProductsPage() {
+export default function page() {
   return (
     <>
       <PageHeader>Add new Product</PageHeader>
+      <ProductForm />
     </>
   );
 }
-
-export default NewProductsPage;
