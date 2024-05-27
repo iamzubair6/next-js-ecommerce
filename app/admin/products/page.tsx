@@ -24,9 +24,9 @@ function ProductTable() {
           <TableHead className="w-0">
             <span className="sr-only">Available For Purchase</span>
           </TableHead>
-          <TableHead>Name</TableHead>
-          <TableHead>Price</TableHead>
-          <TableHead>Order</TableHead>
+          <TableHead align="center">Name</TableHead>
+          <TableHead align="center">Price</TableHead>
+          <TableHead align="center">Order</TableHead>
           <TableHead className="w-0">
             <span className="sr-only">Action</span>
           </TableHead>
