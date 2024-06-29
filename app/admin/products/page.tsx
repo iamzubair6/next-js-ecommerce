@@ -109,11 +109,11 @@ async function ProductTable() {
                         Edit
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
+                    {/* <DropdownMenuItem asChild>
                       <Link href={`/admin/products/${item?.id}/delete`}>
                         Delete
                       </Link>
-                    </DropdownMenuItem>
+                    </DropdownMenuItem> */}
                     <ActiveToggleDropdownItem
                       id={item?.id}
                       isAvailableForPurchase={item?.isAvailableForPurchase}
