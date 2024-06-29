@@ -1,5 +1,6 @@
 "use client";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { useToast } from "@/components/ui/use-toast";
 import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import {
@@ -53,4 +54,11 @@ export function DeleteDropdownItem({
       Delete
     </DropdownMenuItem>
   );
+}
+export function successToast(message: string) {
+  const { toast } = useToast();
+  return toast({
+    variant: "destructive",
+    title: message,
+  });
 }

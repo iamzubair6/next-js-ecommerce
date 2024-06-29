@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { isPasswordValid } from "./lib/isPasswordValid";
 
 export async function middleware(req: NextRequest) {
   if ((await isAuthenticated(req)) === false) {
@@ -18,8 +19,13 @@ async function isAuthenticated(req: NextRequest) {
   const [username, password] = Buffer.from(authHeader.split(" ")[1], "base64")
     .toString()
     .split(":");
-
-  return username === process.env.ADMIN_USERNAME;
+  return (
+    username === process.env.ADMIN_USERNAME &&
+    (await isPasswordValid(
+      password,
+      process.env.HASHED_ADMIN_PASSWORD as string
+    ))
+  );
 }
 
 export const config = {
