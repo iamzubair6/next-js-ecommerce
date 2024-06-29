@@ -80,12 +80,12 @@ async function ProductTable() {
                 {item?.isAvailableForPurchase ? (
                   <>
                     <span className="sr-only">Available</span>
-                    <CheckCircle2 />
+                    <CheckCircle2 className="stroke-green-600" />
                   </>
                 ) : (
                   <>
                     <span className="sr-only">Unavailable</span>
-                    <XCircle />
+                    <XCircle className="stroke-destructive" />
                   </>
                 )}
               </TableCell>
