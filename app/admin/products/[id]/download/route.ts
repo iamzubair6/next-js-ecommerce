@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params: { id } }: { params: { id: string } }
 ) {
   const product = await db.product.findUnique({

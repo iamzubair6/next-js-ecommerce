@@ -19,7 +19,7 @@ const addSchema = z.object({
   }),
 });
 
-export async function addProduct(prevState: unknown, formData: FormData) {
+export async function addProduct(_prevState: unknown, formData: FormData) {
   const result = addSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!result.success) {
     return result.error.formErrors.fieldErrors;
@@ -53,7 +53,7 @@ const editSchema = addSchema?.extend({
 });
 export async function editProduct(
   id: string,
-  prevState: unknown,
+  _prevState: unknown,
   formData: FormData
 ) {
   const result = editSchema.safeParse(Object.fromEntries(formData.entries()));
