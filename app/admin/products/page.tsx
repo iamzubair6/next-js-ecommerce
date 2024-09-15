@@ -33,11 +33,15 @@ export default function AdminProductsPage() {
           <Link href={"/admin/products/new"}>Add New Product</Link>
         </Button>
       </div>
+      {/* The ProductTable is now an async server component */}
       <ProductTable />
     </>
   );
 }
+
+// Make ProductTable an async function to fetch data from the database
 async function ProductTable() {
+  // Fetch products from the database
   const products = await db.product.findMany({
     select: {
       id: true,
@@ -54,9 +58,12 @@ async function ProductTable() {
       name: "asc",
     },
   });
+
+  // Check if no products are found
   if (products?.length === 0) {
     return <p>No Products Found</p>;
   }
+
   return (
     <Table>
       <TableHeader>
@@ -73,62 +80,53 @@ async function ProductTable() {
         </TableRow>
       </TableHeader>
       <TableBody>
-        {products?.map((item, idx) => {
-          return (
-            <TableRow key={idx}>
-              <TableCell>
-                {item?.isAvailableForPurchase ? (
-                  <>
-                    <span className="sr-only">Available</span>
-                    <CheckCircle2 className="stroke-green-600" />
-                  </>
-                ) : (
-                  <>
-                    <span className="sr-only">Unavailable</span>
-                    <XCircle className="stroke-destructive" />
-                  </>
-                )}
-              </TableCell>
-              <TableCell>{item?.name}</TableCell>
-              <TableCell>{formatCurrency(item?.priceInTaka)}</TableCell>
-              <TableCell>{formatNumber(item?._count?.orders)}</TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger>
-                    <MoreVertical />
-                    <span className="sr-only">Action</span>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem asChild>
-                      <a download href={`/admin/products/${item?.id}/download`}>
-                        Download
-                      </a>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem asChild>
-                      <Link href={`/admin/products/${item?.id}/edit`}>
-                        Edit
-                      </Link>
-                    </DropdownMenuItem>
-                    {/* <DropdownMenuItem asChild>
-                      <Link href={`/admin/products/${item?.id}/delete`}>
-                        Delete
-                      </Link>
-                    </DropdownMenuItem> */}
-                    <ActiveToggleDropdownItem
-                      id={item?.id}
-                      isAvailableForPurchase={item?.isAvailableForPurchase}
-                    />
-                    <DropdownMenuSeparator />
-                    <DeleteDropdownItem
-                      id={item?.id}
-                      disabled={item?._count?.orders > 0}
-                    />
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
-            </TableRow>
-          );
-        })}
+        {products?.map((item, idx) => (
+          <TableRow key={idx}>
+            <TableCell>
+              {item?.isAvailableForPurchase ? (
+                <>
+                  <span className="sr-only">Available</span>
+                  <CheckCircle2 className="stroke-green-600" />
+                </>
+              ) : (
+                <>
+                  <span className="sr-only">Unavailable</span>
+                  <XCircle className="stroke-destructive" />
+                </>
+              )}
+            </TableCell>
+            <TableCell>{item?.name}</TableCell>
+            <TableCell>{formatCurrency(item?.priceInTaka)}</TableCell>
+            <TableCell>{formatNumber(item?._count?.orders)}</TableCell>
+            <TableCell>
+              <DropdownMenu>
+                <DropdownMenuTrigger>
+                  <MoreVertical />
+                  <span className="sr-only">Action</span>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent>
+                  <DropdownMenuItem asChild>
+                    <a download href={`/admin/products/${item?.id}/download`}>
+                      Download
+                    </a>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/admin/products/${item?.id}/edit`}>Edit</Link>
+                  </DropdownMenuItem>
+                  <ActiveToggleDropdownItem
+                    id={item?.id}
+                    isAvailableForPurchase={item?.isAvailableForPurchase}
+                  />
+                  <DropdownMenuSeparator />
+                  <DeleteDropdownItem
+                    id={item?.id}
+                    disabled={item?._count?.orders > 0}
+                  />
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </TableCell>
+          </TableRow>
+        ))}
       </TableBody>
     </Table>
   );
