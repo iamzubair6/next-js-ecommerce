@@ -18,7 +18,7 @@ async function GetSalesData() {
     let amount = salesData?._sum?.pricePaidInTaka || 0;
     let numberOfSales = salesData?._count || 0;
 
-    await wait(2000); // Simulating delay
+    await wait(1000); // Simulating delay
 
     return {
       amount,
