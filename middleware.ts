@@ -28,6 +28,7 @@ async function isAuthenticated(req: NextRequest) {
   );
 }
 
+//check if you are authenticated or in other words, if you are in the admin page
 export const config = {
   matcher: "/admin/:path*",
 };
