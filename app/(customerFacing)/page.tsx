@@ -40,7 +40,7 @@ type ProductGridSectionProp = {
   title: string;
   productFetcher: () => Promise<Product[]>;
 };
-function ProductGridSection({ productFetcher, title }: ProductGridSectionProp) {
+function ProductGridSection({ title }: ProductGridSectionProp) {
   return (
     <div className="space-y-4">
       <div className="flex gap-4">
