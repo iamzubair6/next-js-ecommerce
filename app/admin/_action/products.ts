@@ -1,6 +1,7 @@
 "use server";
 import db from "@/db/db";
 import fs from "fs/promises";
+import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
 import { z } from "zod";
 const fileSchema = z.instanceof(File, { message: "File is required" });
@@ -45,6 +46,8 @@ export async function addProduct(_prevState: unknown, formData: FormData) {
       imagePath,
     },
   });
+  revalidatePath("/");
+  revalidatePath("/products");
   redirect("/admin/products");
 }
 const editSchema = addSchema?.extend({
@@ -95,16 +98,20 @@ export async function editProduct(
       imagePath,
     },
   });
+  revalidatePath("/");
+  revalidatePath("/products");
   redirect("/admin/products");
 }
 export async function toggleProductAvailability(
   id: string,
   isAvailableForPurchase: boolean
 ) {
-  return db.product.update({
+  await db.product.update({
     where: { id },
     data: { isAvailableForPurchase },
   });
+  revalidatePath("/");
+  revalidatePath("/products");
 }
 export async function deleteProduct(id: string) {
   const product = db.product.delete({ where: { id } });
@@ -113,4 +120,6 @@ export async function deleteProduct(id: string) {
   }
   await fs.unlink((await product).filePath);
   await fs.unlink(`public${(await product).imagePath}`);
+  revalidatePath("/");
+  revalidatePath("/products");
 }
