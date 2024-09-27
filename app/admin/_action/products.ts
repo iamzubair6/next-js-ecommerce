@@ -98,8 +98,8 @@ export async function editProduct(
       imagePath,
     },
   });
-  revalidatePath("/");
-  revalidatePath("/products");
+  // revalidatePath("/");
+  // revalidatePath("/products");
   redirect("/admin/products");
 }
 export async function toggleProductAvailability(
