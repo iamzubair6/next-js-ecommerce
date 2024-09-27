@@ -3,6 +3,7 @@ import db from "@/db/db";
 import fs from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
+import path from "path";
 import { z } from "zod";
 const fileSchema = z.instanceof(File, { message: "File is required" });
 const imageSchema = fileSchema.refine(
@@ -26,16 +27,26 @@ export async function addProduct(_prevState: unknown, formData: FormData) {
     return result.error.formErrors.fieldErrors;
   }
   const data = result.data;
-  await fs.mkdir("products", { recursive: true });
-  const filePath = `products/${crypto.randomUUID()}-${data.file.name}`;
+  const productsDir = path.resolve("products");
+  await fs.mkdir(productsDir, { recursive: true });
+  const filePath = path.join(
+    productsDir,
+    `${crypto.randomUUID()}-${data.file.name}`
+  );
   await fs.writeFile(filePath, Buffer.from(await data.file.arrayBuffer()));
 
-  await fs.mkdir("public/products", { recursive: true });
-  const imagePath = `/products/${crypto.randomUUID()}-${data.image.name}`;
+  const publicProductsDir = path.resolve("public", "products");
+  await fs.mkdir(publicProductsDir, { recursive: true });
+
+  const imagePath = path.join(
+    "/products",
+    `${crypto.randomUUID()}-${data.image.name}`
+  );
   await fs.writeFile(
-    `public${imagePath}`,
+    path.join("public", imagePath),
     Buffer.from(await data.image.arrayBuffer())
   );
+
   await db.product.create({
     data: {
       isAvailableForPurchase: false,
@@ -46,6 +57,7 @@ export async function addProduct(_prevState: unknown, formData: FormData) {
       imagePath,
     },
   });
+
   revalidatePath("/");
   revalidatePath("/products");
   redirect("/admin/products");
