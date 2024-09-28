@@ -118,7 +118,7 @@
 //update
 "use server";
 import db from "@/db/db";
-import { put } from "@vercel/blob";
+import { del, put } from "@vercel/blob";
 import fs from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
@@ -236,9 +236,8 @@ export async function editProduct(
   id: string,
   _prevState: unknown,
   formData: FormData
-): Promise<any> {
+) {
   const result = editSchema.safeParse(Object.fromEntries(formData.entries()));
-
   if (!result.success) {
     return result.error.formErrors.fieldErrors;
   }
@@ -247,27 +246,60 @@ export async function editProduct(
   const product = await db.product.findUnique({ where: { id } });
 
   if (!product) {
-    return new Error("Product not found");
+    return notFound();
   }
 
   let filePath = product.filePath;
   let imagePath = product.imagePath;
 
-  if (data?.file && data.file.size > 0) {
-    await fs.unlink(filePath); // Delete existing file
-    filePath = `products/${crypto.randomUUID()}-${data.file.name}`;
-    await fs.writeFile(filePath, Buffer.from(await data.file.arrayBuffer()));
+  const isProduction = process.env.NODE_ENV === "production";
+
+  if (data?.file != null && data.file.size > 0) {
+    // Delete the old file
+    if (isProduction) {
+      // Production environment: Use the Vercel Blob API to delete the old file
+      await del(filePath); // Assuming 'filePath' is the URL of the blob file
+      console.log(`File deleted from blob storage: ${filePath}`);
+
+      // Upload the new file to Blob Storage
+      const fileBlobData = await uploadToBlobStorage(data.file);
+      filePath = fileBlobData.url;
+    } else {
+      // Local environment: Use fs.unlink to delete the old local file
+      await fs.unlink(filePath);
+      console.log(`Local file deleted: ${filePath}`);
+
+      // Save the new file locally
+      filePath = `products/${crypto.randomUUID()}-${data.file.name}`;
+      await fs.writeFile(filePath, Buffer.from(await data.file.arrayBuffer()));
+    }
   }
 
-  if (data?.image && data.image.size > 0) {
-    await fs.unlink(`public${product.imagePath}`);
-    imagePath = `/products/${crypto.randomUUID()}-${data.image.name}`;
-    await fs.writeFile(
-      `public${imagePath}`,
-      Buffer.from(await data.image.arrayBuffer())
-    );
+  if (data?.image != null && data.image.size > 0) {
+    // Delete the old image
+    if (isProduction) {
+      // Production environment: Use the Vercel Blob API to delete the old image
+      await del(imagePath); // Assuming 'imagePath' is the URL of the blob image
+      console.log(`Image deleted from blob storage: ${imagePath}`);
+
+      // Upload the new image to Blob Storage
+      const imageBlobData = await uploadToBlobStorage(data.image);
+      imagePath = imageBlobData.url;
+    } else {
+      // Local environment: Use fs.unlink to delete the old local image
+      await fs.unlink(`public${imagePath}`);
+      console.log(`Local image deleted: ${imagePath}`);
+
+      // Save the new image locally
+      imagePath = `/products/${crypto.randomUUID()}-${data.image.name}`;
+      await fs.writeFile(
+        `public${imagePath}`,
+        Buffer.from(await data.image.arrayBuffer())
+      );
+    }
   }
 
+  // Update the product in the database
   await db.product.update({
     where: { id },
     data: {
@@ -279,6 +311,7 @@ export async function editProduct(
     },
   });
 
+  // Revalidate paths after successful update
   revalidatePath("/");
   revalidatePath("/products");
   redirect("/admin/products");
