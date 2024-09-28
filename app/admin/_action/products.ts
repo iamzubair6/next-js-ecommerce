@@ -118,6 +118,7 @@
 //update
 "use server";
 import db from "@/db/db";
+import { put } from "@vercel/blob";
 import fs from "fs/promises";
 import { revalidatePath } from "next/cache";
 import { notFound, redirect } from "next/navigation";
@@ -141,66 +142,46 @@ const addSchema = z.object({
 });
 
 // Helper function for uploading files to Blob Storage
-async function uploadToBlobStorage(
-  blobReadWriteUrl: string | URL | Request,
-  blobToken: string,
-  file: File
-) {
-  const response = await fetch(blobReadWriteUrl, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${blobToken}`,
-      "Content-Type": file.type,
-    },
-    body: await file.arrayBuffer(),
+
+interface BlobUploadResult {
+  url: string;
+}
+
+async function uploadToBlobStorage(file: File): Promise<BlobUploadResult> {
+  console.log("Uploading file to Blob Storage...");
+  console.log("File type:", file.type);
+
+  // Upload the file using @vercel/blob's `put` method
+  const { url } = await put(file.name, file, {
+    access: "public", // Specify the access level ('public' or 'private')
   });
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(`Failed to upload file: ${errorText}`);
-  }
-
-  return await response.json();
+  console.log("File uploaded successfully to:", url);
+  return { url };
 }
 
 // Add Product Function
 export async function addProduct(_prevState: unknown, formData: FormData) {
   const result = addSchema.safeParse(Object.fromEntries(formData.entries()));
-
   if (!result.success) {
     return result.error.formErrors.fieldErrors; // Handle validation errors
   }
 
   const data = result.data;
-  let filePath: string | undefined;
-  let imagePath: string | undefined;
+  let filePath;
+  let imagePath;
 
   const isProduction = process.env.NODE_ENV === "production";
-  const blobReadWriteUrl = process.env.VERCEL_BLOB_READ_WRITE_URL;
-  const blobToken = process.env.BLOB_READ_WRITE_TOKEN;
 
   if (isProduction) {
-    if (!blobReadWriteUrl || !blobToken) {
-      throw new Error("Blob storage URL or token is not defined");
-    }
-
-    // Upload file to Blob Storage
-    const fileBlobData = await uploadToBlobStorage(
-      blobReadWriteUrl,
-      blobToken,
-      data.file
-    );
+    // Upload file and image to Blob Storage using @vercel/blob
+    const fileBlobData = await uploadToBlobStorage(data.file);
     filePath = fileBlobData.url;
 
-    // Upload image to Blob Storage
-    const imageBlobData = await uploadToBlobStorage(
-      blobReadWriteUrl,
-      blobToken,
-      data.image
-    );
+    const imageBlobData = await uploadToBlobStorage(data.image);
     imagePath = imageBlobData.url;
   } else {
-    // Local environment: Save files to /products and /public/products
+    // Local file system logic for development
     await fs.mkdir("products", { recursive: true });
     const localFileName = `${crypto.randomUUID()}-${data.file.name}`;
     const localFilePath = `products/${localFileName}`;
@@ -210,8 +191,6 @@ export async function addProduct(_prevState: unknown, formData: FormData) {
     );
     filePath = localFilePath;
 
-    console.log("Local file saved to:", filePath);
-
     await fs.mkdir("public/products", { recursive: true });
     const localImageName = `${crypto.randomUUID()}-${data.image.name}`;
     const localImagePath = `public/products/${localImageName}`;
@@ -220,8 +199,6 @@ export async function addProduct(_prevState: unknown, formData: FormData) {
       Buffer.from(await data.image.arrayBuffer())
     );
     imagePath = `/products/${localImageName}`;
-
-    console.log("Local image saved to:", imagePath);
   }
 
   // Ensure paths are defined
@@ -245,7 +222,7 @@ export async function addProduct(_prevState: unknown, formData: FormData) {
   revalidatePath("/");
   revalidatePath("/products");
 
-  // Perform the redirect without further processing
+  // Perform redirect
   redirect("/admin/products");
 }
 
@@ -259,8 +236,9 @@ export async function editProduct(
   id: string,
   _prevState: unknown,
   formData: FormData
-) {
+): Promise<any> {
   const result = editSchema.safeParse(Object.fromEntries(formData.entries()));
+
   if (!result.success) {
     return result.error.formErrors.fieldErrors;
   }
@@ -268,20 +246,20 @@ export async function editProduct(
   const data = result.data;
   const product = await db.product.findUnique({ where: { id } });
 
-  if (product == null) {
-    return notFound();
+  if (!product) {
+    return new Error("Product not found");
   }
 
   let filePath = product.filePath;
+  let imagePath = product.imagePath;
 
-  if (data?.file != null && data.file.size > 0) {
-    await fs.unlink(filePath);
+  if (data?.file && data.file.size > 0) {
+    await fs.unlink(filePath); // Delete existing file
     filePath = `products/${crypto.randomUUID()}-${data.file.name}`;
     await fs.writeFile(filePath, Buffer.from(await data.file.arrayBuffer()));
   }
 
-  let imagePath = product.imagePath;
-  if (data?.image != null && data.image.size > 0) {
+  if (data?.image && data.image.size > 0) {
     await fs.unlink(`public${product.imagePath}`);
     imagePath = `/products/${crypto.randomUUID()}-${data.image.name}`;
     await fs.writeFile(
@@ -310,38 +288,66 @@ export async function editProduct(
 export async function toggleProductAvailability(
   id: string,
   isAvailableForPurchase: boolean
-) {
-  await db.product.update({
-    where: { id },
-    data: { isAvailableForPurchase },
-  });
+): Promise<void> {
+  try {
+    await db.product.update({
+      where: { id },
+      data: { isAvailableForPurchase },
+    });
 
-  revalidatePath("/");
-  revalidatePath("/products");
+    // Revalidate paths if the update is successful
+    revalidatePath("/");
+    revalidatePath("/products");
+  } catch (error) {
+    console.error("Error updating product availability:", error);
+    throw new Error("Failed to update product availability.");
+  }
 }
 
 // Delete Product Function
-export async function deleteProduct(id: string) {
+export async function deleteProduct(id: string): Promise<void> {
   const product = await db.product.findUnique({ where: { id } });
-  if (product == null) {
-    return notFound();
+
+  if (!product) {
+    return notFound(); // Return early if the product is not found
   }
 
   const filePath = product.filePath;
   const imagePath = `public${product.imagePath}`;
 
   try {
-    await fs.unlink(filePath);
-    console.log(`File deleted: ${filePath}`);
-    await fs.unlink(imagePath);
-    console.log(`Image deleted: ${imagePath}`);
+    const isProduction = process.env.NODE_ENV === "production";
 
+    if (isProduction) {
+      // Handle blob storage file deletion if in production
+      // Use Vercel Blob API or appropriate method to delete the file from blob storage
+      console.log("Deleting from Blob Storage...");
+      // Add your blob deletion logic here
+    } else {
+      // Local file deletion
+      try {
+        await fs.unlink(filePath);
+        console.log(`File deleted: ${filePath}`);
+      } catch (error) {
+        console.error(`Error deleting file: ${filePath}`, error);
+      }
+
+      try {
+        await fs.unlink(imagePath);
+        console.log(`Image deleted: ${imagePath}`);
+      } catch (error) {
+        console.error(`Error deleting image: ${imagePath}`, error);
+      }
+    }
+
+    // Delete product from the database
     await db.product.delete({ where: { id } });
 
+    // Revalidate paths after successful deletion
     revalidatePath("/");
     revalidatePath("/products");
   } catch (error) {
-    console.error("Error deleting files:", error);
-    throw new Error("An error occurred while deleting the product files.");
+    console.error("Error deleting product:", error);
+    throw new Error("An error occurred while deleting the product.");
   }
 }
