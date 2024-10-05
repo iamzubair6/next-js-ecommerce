@@ -15,7 +15,7 @@ async function GetSalesData() {
       _count: true,
     });
 
-    let amount = salesData?._sum?.pricePaidInTaka || 0;
+    let amount = (salesData?._sum?.pricePaidInTaka || 0) / 100;
     let numberOfSales = salesData?._count || 0;
 
     await wait(1000); // Simulating delay
@@ -41,7 +41,9 @@ async function GetUserData() {
     ]);
 
     let averageValuePerUser =
-      userCount === 0 ? 0 : (orderData?._sum?.pricePaidInTaka || 0) / userCount;
+      userCount === 0
+        ? 0
+        : (orderData?._sum?.pricePaidInTaka || 0) / userCount / 100;
 
     return {
       userCount,

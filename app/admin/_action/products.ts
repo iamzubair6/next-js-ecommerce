@@ -13,9 +13,12 @@ const imageSchema = fileSchema.refine(
   (file) => file.size === 0 || file.type.startsWith("image/")
 );
 const addSchema = z.object({
-  product_name: z.string().min(1),
-  product_price: z.coerce.number().int().min(1),
-  description: z.string().min(1),
+  product_name: z.string().min(1, { message: "Product Name is required" }),
+  product_price: z.coerce
+    .number()
+    .int()
+    .min(1, { message: "Price is required" }),
+  description: z.string().min(1, { message: "Description is required" }),
   file: fileSchema.refine((file) => file.size > 0, {
     message: "File is required",
   }),
