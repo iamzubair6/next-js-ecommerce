@@ -32,7 +32,7 @@ const ProductCard = ({
       </div>
       <CardHeader>
         <CardTitle>{name}</CardTitle>
-        <CardDescription>{formatCurrency(priceInTaka)}</CardDescription>
+        <CardDescription>{formatCurrency(priceInTaka / 100)}</CardDescription>
       </CardHeader>
       <CardContent className="flex-grow">
         <p className="line-clamp-4">{description}</p>

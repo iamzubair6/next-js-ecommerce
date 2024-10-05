@@ -96,7 +96,7 @@ async function ProductTable() {
               )}
             </TableCell>
             <TableCell>{item?.name}</TableCell>
-            <TableCell>{formatCurrency(item?.priceInTaka)}</TableCell>
+            <TableCell>{formatCurrency(item?.priceInTaka / 100)}</TableCell>
             <TableCell>{formatNumber(item?._count?.orders)}</TableCell>
             <TableCell>
               <DropdownMenu>
